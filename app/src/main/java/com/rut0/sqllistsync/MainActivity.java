@@ -1,16 +1,66 @@
 package com.rut0.sqllistsync;
 
-import android.support.v7.app.AppCompatActivity;
+import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 
 public class MainActivity extends AppCompatActivity {
+
+    ListView view;
+    MessageCursorAdapter adapter;
+    DbHelper helper;
+
+    EditText editText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        view = (ListView) findViewById(R.id.listView);
+        helper = new DbHelper(this);
+        adapter = new MessageCursorAdapter(this, helper.getMessages());
+        view.setAdapter(adapter);
+
+        Button btn = (Button) findViewById(R.id.btn);
+        editText = (EditText) findViewById(R.id.editText);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String msg = editText.getText().toString().trim();
+                if (msg != null && msg.length() > 0) {
+                    if (helper.addMessage("ME", msg)) {
+                        updateMessage();
+                    }
+                }
+            }
+        });
+    }
+
+    @SuppressLint("NewApi")
+    public void updateMessage() {
+        if (Looper.getMainLooper().equals(Looper.myLooper())) {
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                adapter.swapCursor(helper.getMessages());
+            } else {
+                adapter.changeCursor(helper.getMessages());
+            }
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateMessage();
+                }
+            });
+        }
     }
 
     @Override
