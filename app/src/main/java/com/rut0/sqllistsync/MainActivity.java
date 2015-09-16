@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         view = (ListView) findViewById(R.id.listView);
+
         helper = new DbHelper(this);
         adapter = new MessageCursorAdapter(this, helper.getMessages());
         view.setAdapter(adapter);
@@ -43,6 +44,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                for (int i = 0; i < 1000; i++) {
+                    helper.addMessage("BOT", i + " hi");
+                }
+                updateMessage();
+                for (int i = 1000; ; i++) {
+                    helper.addMessage("BOT", i + " hi");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    updateMessage();
+                }
+            }
+        }).start();
+
     }
 
     @SuppressLint("NewApi")
@@ -53,6 +78,13 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 adapter.changeCursor(helper.getMessages());
             }
+            view.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Select the last row so it will scroll into view...
+                    view.setSelection(adapter.getCount() - 1);
+                }
+            });
         } else {
             runOnUiThread(new Runnable() {
                 @Override
